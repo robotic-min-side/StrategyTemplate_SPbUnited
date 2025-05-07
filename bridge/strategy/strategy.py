@@ -56,9 +56,15 @@ class Strategy:
         return actions
 
     def run(self, field: fld.Field, actions: list[Action]) -> None:
-        """
-        Assigning roles to robots and managing them
-            roles - robot roles sorted by priority
-            robot_roles - list of robot id and role matches
-        """
-        pass
+            """
+            Assigning roles to robots and managing them
+                roles - robot roles sorted by priority
+                robot_roles - list of robot id and role matches
+            """
+            idx = 0
+            pos = aux.Point(-1000, -1000)
+            actions[idx] = Actions.GoToPointIgnore(pos, 1.0)
+
+
+
+        
