@@ -22,10 +22,11 @@ if __name__ == "__main__":
         ),
         SSLController(
             ally_color=const.COLOR,
+        
         ),
         Drawer(),
         CommandSink(),
     ]
-
+    
     RUNNER = Runner(processors=PROCESSORS)
     RUNNER.run()

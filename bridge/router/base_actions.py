@@ -163,7 +163,7 @@ class Actions:
                     not aux.is_point_inside_poly(domain.field.ball.get_pos(), domain.field.enemy_goal.hull)
                     and not aux.is_point_inside_poly(domain.field.ball.get_pos(), domain.field.ally_goal.hull)
                 )
-            )
+            )   
 
         def behavior(self, domain: ActionDomain, current_action: ActionValues) -> None:
             ball_pos = domain.field.ball.get_pos()
@@ -203,6 +203,42 @@ class Actions:
 
             if self.control_angle_by_speed:
                 current_action.beep = 1
+
+    class KickPause(Action):
+
+        def __init__(self, finish_angle, kick_flag, pass_pos):
+            self.finish_angle = finish_angle
+            self.kick_flag = kick_flag
+            self.pass_pos = pass_pos
+
+        def is_defined(self, domain: ActionDomain) -> bool:
+            return domain.field.is_ball_in(domain.robot)
+
+        def behavior(self, domain: ActionDomain, current_action: ActionValues) -> None:
+            current_action.dribbler_speed = 10 # 0-15
+            current_action.vel = aux.Point(0, 0)
+            if aux.wind_down_angle(domain.robot.get_angle() - self.finish_angle) < 0:
+                current_action.angle = 0.5
+            else:
+                current_action.angle = -0.5
+            current_action.beep = 1
+
+        def use_behavior_of(self, domain: ActionDomain, current_action: ActionValues) -> list["Action"]:
+            kick_angle = aux.angle_to_point(domain.robot.get_pos(), domain.field.ball.get_pos())
+            if self.kick_flag != True:
+                actions = [
+                    Actions.BallGrab(kick_angle),
+                    DumbActions.ControlVoltageAction(domain.field.ball.get_pos(), pass_pos=self.pass_pos),
+                ]
+            else:
+                actions = [
+                    Actions.BallGrab(kick_angle),
+                    DumbActions.ShootAction(self.finish_angle),
+                    DumbActions.ControlVoltageAction(domain.field.ball.get_pos(), pass_pos=self.pass_pos),
+                ]
+            return actions
+
+
 
     twisted_flag = False
     fast_twist_timer = None
