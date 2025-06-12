@@ -2,6 +2,7 @@
 Определение необходимых констант
 """
 
+import math
 from enum import Enum
 
 
@@ -55,8 +56,8 @@ SELF_PLAY = False
 
 DEBUG_HALF = 0  # 1 = +x, -1 = -x, 0 = not debug
 
-GK = 0
-ENEMY_GK = 1
+GK = 5
+ENEMY_GK = 5
 
 ROBOTS_MAX_COUNT: int = 32
 TEAM_ROBOTS_MAX_COUNT: int = ROBOTS_MAX_COUNT // 2
@@ -111,11 +112,12 @@ IMAGE_TOPIC = "image-topic"
 ##################################################
 
 ##################################################
-# CONTROL CONSTS
+# CONTROL CONST
 Ts = 0.02  # s
 
 # ROBOT SETTING CONSTS
-MAX_SPEED = 1500
+MAX_SPEED = 2000 if not IS_SIMULATOR_USED else 1000
+MAX_ACCELERATION = 5000
 MAX_SPEED_R = 30
 SOFT_MAX_SPEED = 500
 SOFT_MAX_SPEED_R = 16
@@ -167,14 +169,12 @@ match DIV:
 
 
 # ROUTE CONSTS
-KEEP_BALL_DIST = 300 + ROBOT_R  # QEWE
 VIEW_DIST = 2500
 
 # is_ball_in
 GRAB_ALIGN_DIST = 130
-BALL_GRABBED_DIST = 115
 BALL_GRABBED_ANGLE = 0.8
-
+BALL_GRABBED_DIST = 110
 # is_kick_aligned
 KICK_ALIGN_DIST_MULT = 1.5
 KICK_ALIGN_ANGLE = 0.1
@@ -187,10 +187,13 @@ GRAB_AREA = GRAB_ALIGN_DIST
 GRAB_DIST = 70
 GRAB_MULT = 5  # speed = dist * mult
 GRAB_OFFSET_ANGLE = 0.55
-if IS_SIMULATOR_USED:
-    GRAB_OFFSET_ANGLE = 0.35
-    GRAB_DIST = 85
 
+if IS_SIMULATOR_USED:
+    GRAB_ALIGN_DIST = 150
+    BALL_GRABBED_DIST = 150
+    GRAB_DIST = 85
+    GRAB_MULT = 5
+    GRAB_OFFSET_ANGLE = 0.35
 
 # VOLTAGES
 VOLTAGE_SHOOT = 15

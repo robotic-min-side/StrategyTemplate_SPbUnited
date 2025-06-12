@@ -4,6 +4,7 @@ Class with robot actions
 
 import math
 from typing import Optional
+from time import time
 
 import bridge.auxiliary.quickhull as qh
 from bridge import const
@@ -44,22 +45,39 @@ class Actions:
             self.target_vel = target_vel
 
         def behavior(self, domain: ActionDomain, current_action: ActionValues) -> None:
-            vec_err = self.target_pos - domain.robot.get_pos()
-            cur_vel = domain.robot.get_vel()
+            cur_robot = domain.robot
+            vec_err = self.target_pos - cur_robot.get_pos()
+            cur_vel = cur_robot.get_vel()
 
-            ball_escorting = self.ball_interact and aux.dist(domain.robot.get_pos(), domain.field.ball.get_pos()) < 700
+            ball_escorting = self.ball_interact and aux.dist(cur_robot.get_pos(), domain.field.ball.get_pos()) < 700
             if ball_escorting:
-                domain.robot.pos_reg_x.select_mode(tau.Mode.SOFT)
-                domain.robot.pos_reg_y.select_mode(tau.Mode.SOFT)
+                cur_robot.pos_reg_x.select_mode(tau.Mode.SOFT)
+                cur_robot.pos_reg_y.select_mode(tau.Mode.SOFT)
             else:
-                domain.robot.pos_reg_x.select_mode(tau.Mode.NORMAL)
-                domain.robot.pos_reg_y.select_mode(tau.Mode.NORMAL)
+                cur_robot.pos_reg_x.select_mode(tau.Mode.NORMAL)
+                cur_robot.pos_reg_y.select_mode(tau.Mode.NORMAL)
 
-            u_x = domain.robot.pos_reg_x.process(vec_err.x, -cur_vel.x)
-            u_y = domain.robot.pos_reg_y.process(vec_err.y, -cur_vel.y)
-
+            u_x = cur_robot.pos_reg_x.process_(vec_err.x, -cur_vel.x, time() - cur_robot.prev_sended_time)
+            u_y = cur_robot.pos_reg_y.process_(vec_err.y, -cur_vel.y, time() - cur_robot.prev_sended_time)
             current_action.vel = aux.Point(u_x, u_y)
+            # return
+            cur_vel_abs = aux.rotate(current_action.vel, cur_robot.get_angle())
+            prev_vel_abs = aux.rotate(cur_robot.prev_sended_vel, cur_robot.prev_sended_angle)
+            if (cur_vel_abs - prev_vel_abs).mag() / (time() - cur_robot.prev_sended_time) > const.MAX_ACCELERATION:
+                # domain.field.router_image.draw_dot(aux.Point(0, 1000), size_in_mms=200)
+                current_action.vel = aux.rotate(
+                    prev_vel_abs
+                    + (cur_vel_abs - prev_vel_abs).unity() * const.MAX_ACCELERATION * (time() - cur_robot.prev_sended_time),
+                    -cur_robot.get_angle(),
+                )
+
+            # current_action.vel = aux.Point(0,500)
+            cur_robot.prev_sended_vel = current_action.vel
+            cur_robot.prev_sended_angle = cur_robot.get_angle()
+            cur_robot.prev_sended_time = time()
             current_action.angle = self.target_angle
+
+            DumbActions.AddFinalVelocityAction(self.target_pos, self.target_vel).process(domain, current_action)
 
     class GoToPoint(Action):
         """Go to point and avoid obstacles"""

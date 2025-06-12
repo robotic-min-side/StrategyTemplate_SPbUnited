@@ -107,7 +107,7 @@ class Integrator:
     Интегратор
     """
 
-    def __init__(self, Ts: float) -> None:
+    def __init__(self, Ts: float, maxI: float = 1e20) -> None:
         """
         Конструктор
 
@@ -116,6 +116,8 @@ class Integrator:
         self._ts = Ts
         self._int = 0.0
         self._out = 0.0
+        self.__maxI = maxI
+        self.__int = 0.0
 
     def reset(self) -> None:
         """
@@ -132,6 +134,7 @@ class Integrator:
         x - новое значение входа
         """
         self._int += x * self._ts
+        self.__int = aux.minmax(self.__int, self.__maxI)
         self._out = self._int
         return self._out
 
@@ -142,6 +145,7 @@ class Integrator:
         x - новое значение входа
         """
         self._int += x * dT
+        self._int = aux.minmax(self._int, self.__maxI)
         self._out = self._int
         return self._out
 
@@ -190,9 +194,10 @@ class PISD:
         self.__kd = kd
         self.__ki = ki
         self.__max_out = max_out
-        self.__int = Integrator(dT)
+        self.__int = Integrator(dT, 100)
         self.__out = 0.0
         self.__mode = Mode.NORMAL
+        # self.__limiter = RateLimiter(dT,const.MAX_ACCELERATION)
 
     def select_mode(self, mode: Mode) -> None:
         """
@@ -229,7 +234,7 @@ class PISD:
         # self.__out = u_clipped
         # if u != aux.minmax(u, max_out):
         self.__int.process(xerr + k_d * x_i)
-
+        # self.__limiter.process(x_i)
         self.__out = u
 
         return self.__out
@@ -239,15 +244,16 @@ class PISD:
         Рассчитать следующий тик регулятора
         """
         gain, k_d, k_i, max_out = self.__get_gains()
+        # xerr = aux.minmax(xerr,)
 
-        s = xerr + k_d * x_i + k_i * self.__int.get_val()
+        s = xerr + k_d * x_i + self.__int.get_val()
         u = gain * s
 
-        self.__int.process_(xerr + k_d * x_i, dT)
+        self.__int.process_(k_i * (xerr + k_d * x_i), dT)
 
-        self.__out = u
+        # self.__out = u
 
-        # self.__out = aux.minmax(u,max_out) #NOTE
+        self.__out = aux.minmax(u, max_out)  # NOTE
 
         return self.__out
 
@@ -261,7 +267,7 @@ class PISD:
 class RateLimiter:
     """
     Ограничитель скорости роста
-    """
+    """ 
 
     def __init__(self, Ts: float, max_der: float) -> None:
         """

@@ -32,7 +32,6 @@ class Strategy:
         if field.ally_color == const.COLOR:
             text = str(field.game_state) + "  we_active:" + str(self.we_active)
             field.strategy_image.print(aux.Point(600, 780), text, need_to_scale=False)
-
         match field.game_state:
             case GameStates.RUN:
                 self.run(field, actions)

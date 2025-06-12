@@ -3,6 +3,7 @@
 """
 
 import typing
+from time import time
 
 from bridge import const
 from bridge.auxiliary import aux, entity, tau
@@ -54,8 +55,8 @@ class Robot(entity.Entity):
 
         # v! REAL
         else:
-            self.k_xx = -1400 / 100
-            self.k_yy = 1200 / 100
+            self.k_xx = -1200 / 30
+            self.k_yy = 1100 / 30
             self.k_ww = 6 / 20
             self.k_wy = 0
             self.t_wy = 0.15
@@ -73,8 +74,9 @@ class Robot(entity.Entity):
         # self.a0Flp = tau.FOLP(self.a0TF, const.Ts)
 
         # !v REAL
-        gains_full = [2.5, 0.05, 1, const.MAX_SPEED]
-        gains_soft = [1.5, 0.05, 1, const.MAX_SPEED]
+        gains_full = [2.0, 0.1, 0.05, const.MAX_SPEED]
+        # gains_full = [0.3, 0.2, 1, const.MAX_SPEED]
+        gains_soft = [2.0, 0.1, 0.05, const.SOFT_MAX_SPEED]
         a_gains_full = [8, 0.1, 0, const.MAX_SPEED_R]
         # gains_soft = [10, 0.32, 0, const.SOFT_MAX_SPEED]
         # gains_soft = gains_full
@@ -120,6 +122,10 @@ class Robot(entity.Entity):
         )
 
         self.is_kick_committed = False
+
+        self.prev_sended_vel = aux.Point(0, 0)
+        self.prev_sended_time = time()
+        self.prev_sended_angle = 0.0
 
     def __eq__(self, robo: typing.Any) -> bool:
         if not isinstance(robo, Robot):
@@ -261,7 +267,6 @@ class Robot(entity.Entity):
         global_speed = aux.Point(global_speed_x, global_speed_y)
 
         speed = -aux.rotate(global_speed, -self._angle)
-
         self.speed_x = 1 / self.k_xx * speed.x
         self.speed_y = 1 / self.k_yy * speed.y
 
