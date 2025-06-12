@@ -369,6 +369,36 @@ class Strategy:
         arr = np.array(arr)  # на случай, если вход не является numpy-массивом
         arr[:, :10] = -10000
         return arr
+    
+
+    def calculate_velocities(self, cx, cy, t, base_radius=5, radius_amplitude=2, angular_speed=1):
+        """
+        cx, cy - координаты центра вращения
+        t - текущее время (или шаг)
+        base_radius - средний радиус круга
+        radius_amplitude - амплитуда изменения радиуса (подъезд/отъезд)
+        angular_speed - угловая скорость вращения (рад/с)
+
+        Возвращает список из трех кортежей (vx, vy) - скорости для каждого робота.
+        """
+        velocities = []
+        num_robots = 3
+        for i in range(num_robots):
+            angle = angular_speed * t + 2 * math.pi * i / num_robots
+            radius = base_radius + radius_amplitude * math.sin(angular_speed * t)
+            
+            # Производная радиуса по времени
+            dr_dt = radius_amplitude * angular_speed * math.cos(angular_speed * t)
+            
+            # Скорость по осям:
+            # vx = dr/dt * cos(angle) - radius * angular_speed * sin(angle)
+            # vy = dr/dt * sin(angle) + radius * angular_speed * cos(angle)
+            vx = dr_dt * math.cos(angle) - radius * angular_speed * math.sin(angle)
+            vy = dr_dt * math.sin(angle) + radius * angular_speed * math.cos(angle)
+            
+            velocities.append((vx, vy))
+        
+        return velocities
 
 
 
